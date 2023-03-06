@@ -38,8 +38,8 @@ package sdram_controller_pkg is
 	constant CA_WIDTH : natural := 11;
 	constant BA_WIDTH : natural := 2;
 
-	constant SYS_ADDR_WIDTH :natural := RA_WIDTH + CA_WIDTH + BA_WIDTH;
-	constant Sys_DATA_WIDTH : natural := 8; --based on burst_length and sdram data width
+	constant SYS_ADDR_WIDTH : natural := RA_WIDTH + CA_WIDTH + BA_WIDTH;
+	constant SYS_DATA_WIDTH : natural := 32; --based on burst_length and sdram data width
 
 	constant CA_LSB : natural := 0;	
 	constant CA_MSB : natural := CA_WIDTH -1;
@@ -67,7 +67,7 @@ package sdram_controller_pkg is
 	constant tRFC : natural := (66 + tCK -1)/ tCK;	
 
 	--active to read or write delay
-	constant t_RCD : natural := (15 + tCK -1)/ tCK;	
+	constant tRCD : natural := (15 + tCK -1)/ tCK;	
 
 	--write recovery time
 	constant tWR : natural := (tCK + 7 + tCK -1)/ tCK;	
@@ -83,8 +83,8 @@ package sdram_controller_pkg is
 	constant INHIBIT : std_ulogic_vector(3 downto 0) := "1111";   --(actually it's "1XXX")
 	constant NOP : std_ulogic_vector(3 downto 0) := "0111";
 	constant ACTIVE : std_ulogic_vector(3 downto 0) := "0011";
-	constant READ : std_ulogic_vector(3 downto 0) := "0101";
-	constant WRITE : std_ulogic_vector(3 downto 0) := "0100";
+	constant READ_cmd : std_ulogic_vector(3 downto 0) := "0101";
+	constant WRITE_cmd : std_ulogic_vector(3 downto 0) := "0100";
 	constant BUST_TERMINATE : std_ulogic_vector(3 downto 0) := "0110";
 	constant PRECHARGE : std_ulogic_vector(3 downto 0) := "0010";
 	constant AUTO_REFRESH : std_ulogic_vector(3 downto 0) := "0001";   
