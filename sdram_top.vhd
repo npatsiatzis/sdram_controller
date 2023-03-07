@@ -37,6 +37,7 @@ architecture rtl of sdram_top is
 	signal w_delay_done_refresh : std_ulogic;
 
 	signal w_delay_cycles : natural range 0 to 2**16-1;
+	signal w_rst_cnt , w_refresh_rst_cnt : std_ulogic;
 begin
 	o_DQM <= '0';
 
@@ -44,6 +45,7 @@ init_and_other_delays : entity work.delay_counter(rtl)
 	port map (
 			i_clk =>i_clk,
 			i_arst =>i_arst,
+			i_rst_cnt =>w_rst_cnt,
 			i_delay_cycles =>w_delay_cycles,
 			o_cnt =>w_cnt,
 			o_delay_done =>w_delay_done);
@@ -52,6 +54,7 @@ refresh_delay : entity work.delay_counter(rtl)
 	port map (
 			i_clk =>i_clk,
 			i_arst =>i_arst,
+			i_rst_cnt =>w_refresh_rst_cnt,
 			i_delay_cycles =>AUTO_REFRESH_CYCLES,
 			o_cnt =>w_cnt_refresh,
 			o_delay_done =>w_delay_done_refresh);
@@ -104,6 +107,8 @@ sdram_FSM : entity work.sdram_FSM(rtl)
  		i_ar_req =>w_delay_done_refresh,
  		i_delay_100us_done =>w_delay_done,
  		i_cnt =>w_cnt,
+ 		o_rst_cnt =>w_rst_cnt,
+ 		o_refresh_rst_cnt =>w_refresh_rst_cnt,
  		o_delay_cycles => w_delay_cycles,
 
 

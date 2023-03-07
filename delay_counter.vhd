@@ -9,6 +9,7 @@ entity delay_counter is
 	port (
 			i_clk : in  std_ulogic;
 			i_arst : in std_ulogic;
+			i_rst_cnt : in std_ulogic;
 			i_delay_cycles : in natural range 0 to 2**16-1;
 			o_cnt : out unsigned(15 downto 0);
 			o_delay_done : out std_ulogic);
@@ -23,12 +24,17 @@ begin
 			w_cnt <= (others => '0');
 			o_delay_done <= '0';
 		elsif (rising_edge(i_clk)) then
-			o_delay_done <= '0';
-			if(w_cnt < i_delay_cycles-1) then
-				w_cnt <= w_cnt + 1;
-			else
+			if(i_rst_cnt = '1') then	
 				w_cnt <= (others => '0');
-				o_delay_done <= '1';
+				o_delay_done <= '0';
+			else
+				o_delay_done <= '0';
+				if(w_cnt < i_delay_cycles-1) then
+					w_cnt <= w_cnt + 1;
+				else
+					w_cnt <= (others => '0');
+					o_delay_done <= '1';
+				end if;
 			end if;
 		end if; 
 	end process; -- delay_cnt
