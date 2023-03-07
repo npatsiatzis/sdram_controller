@@ -10,8 +10,8 @@ package sdram_controller_pkg is
 	-- '1' : Single Location Access
 	constant WRITE_BURST_MODE : std_ulogic := '0'; 	
 
-	--'0' : Standard Operation (Default)
-	constant OPERATING_MODE : std_ulogic := '0';
+	--"00" : Standard Operation (Default)
+	constant OPERATING_MODE : std_ulogic_vector := "00";
 
 	-- "010" : 2
 	-- "011" : 3 
@@ -97,13 +97,15 @@ package sdram_controller_pkg is
 	--Here we prefer option 1
 	-- 7.81 us ~= 750 cycles of 10ns
 
-	constant AUTO_REFRESH_CYCLES : natural := 750;
+	constant AUTO_REFRESH_CYCLES : natural := 75;
+	--constant AUTO_REFRESH_CYCLES : natural := 750;
 
 	--regarding INITIALIZATION (page 12 of datasheet)
 	--100 us must elapse with only INHIBIT and NOP commands before the initialization cycle
 	--can start (prechage, 2 auto-refresh commands and then a load mode register)
 
-	constant INITIALIZATION_DELAY_CYCLES : natural := 10**4;
+	constant INITIALIZATION_DELAY_CYCLES : natural := 10**2;
+	--constant INITIALIZATION_DELAY_CYCLES : natural := 10**4;	
 
 
 	--the controller consists of two main phase of operation, each of which is described by an FSM

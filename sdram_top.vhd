@@ -13,6 +13,7 @@ entity sdram_top is
  		i_addr : in std_ulogic_vector(SYS_ADDR_WIDTH -1 downto 0);
   		io_data : inout std_ulogic_vector(SYS_DATA_WIDTH -1 downto 0);
   		o_init_done : out std_ulogic;
+  		o_tip : out std_ulogic;				--transaction in progress
   		o_data_valid : out std_ulogic;
 
  		--interface between controller and sdram
@@ -110,11 +111,9 @@ sdram_FSM : entity work.sdram_FSM(rtl)
  		o_rst_cnt =>w_rst_cnt,
  		o_refresh_rst_cnt =>w_refresh_rst_cnt,
  		o_delay_cycles => w_delay_cycles,
-
-
- 		--interface between controller and sdram
  		o_init_state =>w_init_state, 
  		o_command_state =>w_command_state,
- 		o_init_done =>o_init_done);
+ 		o_init_done =>o_init_done,
+ 		o_tip => o_tip);
 
 end rtl;

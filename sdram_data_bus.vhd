@@ -36,7 +36,7 @@ architecture rtl of sdram_data_bus is
 begin
 
 	io_data <= w_i_DQ when(o_data_valid = '1') else (others => 'Z');
-	gen_o_data_valid : process(i_clk,i_arst) is
+	rd_data_valid_gen : process(i_clk,i_arst) is
 	begin
 		if(i_arst = '1') then
 			o_data_valid <= '0';
@@ -47,7 +47,7 @@ begin
 				o_data_valid <= '0';
 			end if;
 		end if;
-	end process; -- gen_o_data_valid
+	end process; -- rd_data_valid_gen
 
 	w_i_DQ <= w_DQ_7 & w_DQ_6 & w_DQ_5 & w_DQ_4 & w_DQ_3 & w_DQ_2 & w_DQ_1 & w_DQ_0;
 
@@ -91,19 +91,6 @@ begin
 		end if;
 	end process; -- gen_DQ_to_system
 
-	rd_data_valid_gen : process(i_clk,i_arst) is
-	begin
-		if(i_arst = '1') then
-			o_data_valid <= '0';
-		elsif (rising_edge(i_clk)) then
-			if(i_command_state = c_READ and i_cnt = 2**(to_integer(unsigned(BURST_LENGTH))) -1) then		--7 because burst length is 8
-				o_data_valid <= '1';
-			else
-				o_data_valid <= '0';
-			end if;
-		end if;
-	end process; -- rd_data_valid_gen
-
 	io_DQ <= w_o_DQ when (i_command_state = c_WAIT_WR_END_BURST) else "ZZZZ";
 
 	gen_DQ_to_SDRAM : process(i_clk,i_arst) is
@@ -113,19 +100,19 @@ begin
 		elsif (rising_edge(i_clk)) then
 			if(i_command_state = c_WRITE) then
 				w_o_DQ <= io_data(3 downto 0);
-			elsif (i_command_state = c_WAIT_WR_END_BURST and i_cnt = 1) then
+			elsif (i_command_state = c_WAIT_WR_END_BURST and i_cnt = 0) then
 				w_o_DQ <= io_data(7 downto 4);
-			elsif (i_command_state = c_WAIT_WR_END_BURST and i_cnt = 2) then
+			elsif (i_command_state = c_WAIT_WR_END_BURST and i_cnt = 1) then
 				w_o_DQ <= io_data(11 downto 8);
-			elsif (i_command_state = c_WAIT_WR_END_BURST and i_cnt = 3) then
+			elsif (i_command_state = c_WAIT_WR_END_BURST and i_cnt = 2) then
 				w_o_DQ <= io_data(15 downto 12);
-			elsif (i_command_state = c_WAIT_WR_END_BURST and i_cnt = 4) then
+			elsif (i_command_state = c_WAIT_WR_END_BURST and i_cnt = 3) then
 				w_o_DQ <= io_data(19 downto 16);
-			elsif (i_command_state = c_WAIT_WR_END_BURST and i_cnt = 5) then
+			elsif (i_command_state = c_WAIT_WR_END_BURST and i_cnt = 4) then
 				w_o_DQ <= io_data(23 downto 20);
-			elsif (i_command_state = c_WAIT_WR_END_BURST and i_cnt = 6) then
+			elsif (i_command_state = c_WAIT_WR_END_BURST and i_cnt = 5) then
 				w_o_DQ <= io_data(27 downto 24);
-			elsif (i_command_state = c_WAIT_WR_END_BURST and i_cnt = 7) then
+			elsif (i_command_state = c_WAIT_WR_END_BURST and i_cnt = 6) then
 				w_o_DQ <= io_data(31 downto 28);
 			else
 				w_o_DQ <= (others => '1');			
