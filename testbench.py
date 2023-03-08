@@ -1,4 +1,3 @@
-# Functional test for uart module
 import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import Timer,RisingEdge,FallingEdge,ClockCycles,ReadWrite
@@ -6,9 +5,8 @@ from cocotb.result import TestFailure
 import random
 from cocotb_coverage.coverage import CoverPoint,coverage_db
 
-covered_valued = [78,190]
-# data width should be in range(2**8) but it's reduced for execution time issues
-data_width = 3
+covered_valued = []
+
 
 full = False
 def notify():
@@ -18,9 +16,9 @@ def notify():
 
 # at_least = value is superfluous, just shows how you can determine the amount of times that
 # a bin must be hit to considered covered
-# @CoverPoint("top.i_data",xf = lambda x : x, bins = list(range(2**data_width)), at_least=1)
-# def number_cover(data):
-# 	covered_valued.append(int(data))
+@CoverPoint("top.o_data",xf = lambda x : x.o_data.value, bins = list(range(512)), at_least=1)
+def number_cover(dut):
+	covered_valued.append(int(dut.o_data.value))
 
 async def reset(dut,cycles=1):
 	dut.i_arst.value = 1
@@ -34,138 +32,46 @@ async def reset(dut,cycles=1):
 
 @cocotb.test()
 async def test(dut):
-	"""Check results and coverage for single_wire controller"""
+	"""Check results and coverage for SDR SDRAM controller"""
 
 	cocotb.start_soon(Clock(dut.i_clk, 10, units="ns").start())
 	await reset(dut,5)	
 
 	
 	await RisingEdge(dut.o_init_done)
-
-	dut.i_ads_n.value = 0
-	dut.i_W_n.value = 0
-	dut.i_data.value = 100
-	dut.i_addr.value = 0
-
-	await FallingEdge(dut.o_tip)
-
-	# await ClockCycles(dut.i_clk,10)
-
-	dut.i_ads_n.value = 1
-
-	await ClockCycles(dut.i_clk,10)
-
-	dut.i_ads_n.value = 0
-	dut.i_W_n.value = 1
-	# dut.i_data.value = 100
-	dut.i_addr.value = 0
-
-	await FallingEdge(dut.o_tip)
-
-	dut.i_ads_n.value = 1
-
-	await ClockCycles(dut.i_clk,100)
-
-	# dut.i_addr.value = 4   			# clk div register
-	# dut.i_we.value = 1  		    # write the register
-	# dut.i_data.value = 1
-
-	# await RisingEdge(dut.w_1MHz_clk)
 	
-	# while(full != True):
+	while (full != True):
+		data = random.randint(0,511)
+		while(data in covered_valued):
+			data = random.randint(0,511)
 
-	# 	dut.i_addr.value = 0 			# control register
-	# 	dut.i_we.value = 1
-	# 	dut.i_data.value = 1  			# trigger reset pulse
+		dut.i_ads_n.value = 0
+		dut.i_W_n.value = 0
+		dut.i_data.value = data
+		dut.i_addr.value = 0
 
-	# 	await RisingEdge(dut.w_1MHz_clk)
-	# 	dut.i_addr.value =0 
-	# 	dut.i_we.value = 1
-	# 	dut.i_data.value = 0
-	# 	await FallingEdge(dut.single_wire_top.user_registers.i_single_wire_busy)
-
-
-	# 	# prepare to transfer data on the 1-wire bus
-
-	# 	dut.i_addr.value = 1   			# write register
-	# 	dut.i_we.value = 1
-	# 	dut.i_data.value = 78			# write scratchpad command
-
-	# 	await RisingEdge(dut.w_1MHz_clk)
-
-	# 	dut.i_addr.value = 0  			# control register
-	# 	dut.i_we.value = 1 				
-	# 	dut.i_data.value = 2 			# reset low, write high
+		await FallingEdge(dut.o_tip)
 
 
-	# 	await RisingEdge(dut.w_1MHz_clk)
-	# 	dut.i_addr.value =0 
-	# 	dut.i_we.value = 1
-	# 	dut.i_data.value = 0
-	# 	await FallingEdge(dut.single_wire_top.user_registers.i_single_wire_busy)
+		dut.i_ads_n.value = 1
 
+		await ClockCycles(dut.i_clk,10)
 
-	# 	# prepare to transfer data on the 1-wire bus
+		dut.i_ads_n.value = 0
+		dut.i_W_n.value = 1
+		# dut.i_data.value = 100
+		dut.i_addr.value = 0
 
-	# 	dut.i_addr.value = 1   			# write register
-	# 	dut.i_we.value = 1
-	# 	data = random.randint(0,2**data_width-1)
-	# 	while(data in covered_valued):
-	# 		data = random.randint(0,2**data_width-1)
+		await FallingEdge(dut.o_tip)
+		# await FallingEdge(dut.o_data_valid)
+		await RisingEdge(dut.i_clk)
+		dut.i_ads_n.value = 1
+		number_cover(dut)
+		assert not (data != int(dut.o_data.value)),"Different expected to actual read data"
+		coverage_db["top.o_data"].add_threshold_callback(notify, 100)
+		await ClockCycles(dut.i_clk,100)
 
-	# 	dut.i_data.value = data			# data to write to scratchpad
-
-	# 	await RisingEdge(dut.w_1MHz_clk)
-
-	# 	dut.i_addr.value = 0  			# control register
-	# 	dut.i_we.value = 1 				
-	# 	dut.i_data.value = 2 			# reset low, write high
-
-
-	# 	await RisingEdge(dut.w_1MHz_clk)
-	# 	dut.i_addr.value =0 
-	# 	dut.i_we.value = 1
-	# 	dut.i_data.value = 0
-	# 	await FallingEdge(dut.single_wire_top.user_registers.i_single_wire_busy)
-
-
-	# 	# prepare to transfer data on the 1-wire bus
-
-	# 	dut.i_addr.value = 1   			# write register
-	# 	dut.i_we.value = 1
-	# 	dut.i_data.value = 190			# read scratchpad command
-
-	# 	await RisingEdge(dut.w_1MHz_clk)
-
-	# 	dut.i_addr.value = 0  			# control register
-	# 	dut.i_we.value = 1 				
-	# 	dut.i_data.value = 2 			# reset low, read high
-
-
-	# 	await RisingEdge(dut.w_1MHz_clk)
-	# 	dut.i_addr.value =0 
-	# 	dut.i_we.value = 1
-	# 	dut.i_data.value = 0
-	# 	await FallingEdge(dut.single_wire_top.user_registers.i_single_wire_busy)
-
-
-	# 	# prepare to read data on the 1-wire bus
-
-	# 	dut.i_addr.value = 0   			# write register
-	# 	dut.i_we.value = 1
-	# 	dut.i_data.value = 4			# read scratchpad command
-
-	# 	await RisingEdge(dut.w_1MHz_clk)
-	# 	dut.i_addr.value =0 
-	# 	dut.i_we.value = 1
-	# 	dut.i_data.value = 0
-	# 	await FallingEdge(dut.single_wire_top.user_registers.i_single_wire_busy)
-
-	# 	assert not (data != int(dut.single_wire_top.w_1wire_data.value)),"Different expected to actual read data"
-	# 	coverage_db["top.i_data"].add_threshold_callback(notify, 100)
-	# 	number_cover(data)
-
-	# # coverage_db.report_coverage(cocotb.log.info,bins=True)
-	# coverage_db.export_to_xml(filename="coverage.xml")
+	# coverage_db.report_coverage(cocotb.log.info,bins=True)
+	coverage_db.export_to_xml(filename="coverage.xml")
 
 

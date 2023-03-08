@@ -321,16 +321,22 @@ begin
 
 	        --Read, Write, Column Latch
         	if (Read_enable = '1') then
-	            --CAS Latency pipeline
-	            if (Cas_latency_3 = '1') then
-	                Command(2) <= std_ulogic_vector(to_unsigned(cmd_READ,4));
-	                Col_addr(2) <= Addr(11) & Addr(9 downto 0);
-	                Bank_addr(2) <= Ba;
-	            elsif (Cas_latency_2 = '1') then
-	                Command(1) <= std_ulogic_vector(to_unsigned(cmd_READ,4));
-	                Col_addr(1) <= Addr(11) & Addr(9 downto 0);
-	                Bank_addr(1) <= Ba;
-	            end if;
+                Command(0) <= std_ulogic_vector(to_unsigned(cmd_READ,4));
+
+
+	            Bank <= Ba;
+	            Col <= Addr(11) & Addr(9 downto 0);
+	            Col_brst <= Col_addr(0);
+	            case (Ba) is
+	                when "00" => Row <= B0_row_addr;
+	                when "01" => Row <= B1_row_addr;
+	                when "10" => Row <= B2_row_addr;
+	                when others => Row <= B3_row_addr;
+	            end case;
+	            Burst_counter <= (others => '0');
+	            Data_in_enable <= '0';
+	            Data_out_enable <= '1';
+
 
             	--Read interrupt Write (terminate Write immediately)
             	if (Data_in_enable = '1') then
@@ -470,21 +476,8 @@ begin
         	    Dq_reg <= (others => 'Z') AFTER tOH;
     	    end if;
 
-	        --Detect Read or Write command
-	        if (unsigned(Command(0)) = cmd_READ) THEN
-	            Bank <= Bank_addr(0);
-	            Col <= Col_addr(0);
-	            Col_brst <= Col_addr(0);
-	            case (Bank_addr(0)) is
-	                when "00" => Row <= B0_row_addr;
-	                when "01" => Row <= B1_row_addr;
-	                when "10" => Row <= B2_row_addr;
-	                when others => Row <= B3_row_addr;
-	            end case;
-	            Burst_counter <= (others => '0');
-	            Data_in_enable <= '0';
-	            Data_out_enable <= '1';
-	        elsif (unsigned(Command(0)) = cmd_WRITE) THEN
+
+	        if (unsigned(Command(0)) = cmd_WRITE) THEN
 	            Bank <= Bank_addr(0);
 	            Col <= Col_addr(0);
 	            Col_brst <= Col_addr(0);
