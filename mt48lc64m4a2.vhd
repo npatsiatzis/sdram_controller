@@ -10,14 +10,17 @@ entity mt48lc64m4a2 is
 	 		Ras_n : in std_ulogic;
 	 		We_n : in std_ulogic;
 	 		Dqm : in std_ulogic;
-	 		Dq : inout std_ulogic_vector(3 downto 0);
+	 		--Dq : inout std_logic_vector(3 downto 0);
+	 		i_Dq : in std_logic_vector(3 downto 0);
+	 		o_Dq : out std_logic_vector(3 downto 0);
 	 		Ba : in std_ulogic_vector(1 downto 0);
 	 		Addr : in std_ulogic_vector(12 downto 0)
 	 	); 
 end mt48lc64m4a2;
 
 architecture rtl of mt48lc64m4a2 is
-	constant memsizes : natural := 16777215;
+	constant memsizes : natural :=65536;
+	--constant memsizes : natural := 16777215;
 	type t_bank is array (0 to memsizes) of std_ulogic_vector(3 downto 0);
 	signal Bank0, Bank1, Bank2, Bank3 : t_bank;
 
@@ -40,8 +43,8 @@ architecture rtl of mt48lc64m4a2 is
     signal Dq_reg, Dq_dqm : std_ulogic_vector(3 downto 0);
     signal Col_temp, Burst_counter : unsigned(10 downto 0);
 
-    signal Act_b0, Act_b1, Act_b2, Act_b3 : std_ulogic;   -- Bank Activate
-    signal Pc_b0, Pc_b1, Pc_b2, Pc_b3 : std_ulogic;       -- Bank Precharge
+    signal Act_b0, Act_b1, Act_b2, Act_b3 : std_ulogic := '1';   -- Bank Activate
+    signal Pc_b0, Pc_b1, Pc_b2, Pc_b3 : std_ulogic := '0';       -- Bank Precharge
 
     type t_bank_prechange_pipe is array(0 to 3) of std_ulogic_vector(1 downto 0);
     signal Bank_precharge : t_bank_prechange_pipe;				-- Precharge Command
@@ -57,6 +60,9 @@ architecture rtl of mt48lc64m4a2 is
     type t_write_pre_pipe is array(0 to 3) of std_ulogic;
     signal Write_precharge : t_write_pre_pipe;					--  W Auto Precharge
 
+    type t_dq_pipe is array(0 to 1) of std_ulogic_vector(3 downto 0);
+    signal dq_pipe : t_dq_pipe;
+ 
     --type t_rw_pre_pipe is array(0 to 3) of std_ulogic;
     --signal RW_interrupt_read : t_rw_pre_pipe;					-- RW Interrupt Read with Auto Precharge
 
@@ -69,8 +75,8 @@ architecture rtl of mt48lc64m4a2 is
 
     type t_cnt_pre_pipe is array(0 to 3) of integer;
     signal Count_precharge : t_cnt_pre_pipe;						-- RW Auto Precharge Counter	
-    signal Data_in_enable : std_ulogic;
-    signal Data_out_enable : std_ulogic;
+    signal Data_in_enable : std_ulogic := '0';
+    signal Data_out_enable : std_ulogic :='0';
 
     signal Bank, Prev_bank : std_ulogic_vector(1 downto 0);
     signal Row : std_ulogic_vector(12 downto 0);
@@ -119,9 +125,11 @@ architecture rtl of mt48lc64m4a2 is
     constant tWRa : time :=   7.0 ns;     --A2 Version - Auto precharge mode (1 Clk + 7 ns)
     constant tWRm : time :=  14.0 ns;     --A2 Version - Manual precharge mode (14 ns)
 begin
-	row_col_concat <= unsigned(row) & unsigned(col);
+	row_col_concat <= unsigned(Row) & unsigned(Col);
 
-	Dq <= Dq_reg;
+	o_Dq <= Dq_reg;
+	--Dq <= Dq_reg;
+
     -- Commands Decode
     Active_enable    <= not(Cs_n) and  not(Ras_n) and  Cas_n 	  and  We_n;
     Aref_enable      <= not(Cs_n) and  not(Ras_n) and  not(Cas_n) and  We_n;
@@ -144,12 +152,14 @@ begin
 
     -- Write Burst Mode
     Write_burst_mode <= Mode_reg(9);
-
-    Dq <= Dq_reg;   
+ 
 
 	process(i_clk) is
     begin
     	if(rising_edge(i_clk)) then
+    		dq_pipe(0) <= dq_pipe(1);
+    		dq_pipe(1) <= i_Dq;
+
 	        -- Internal Commamd Pipelined
 	        Command(0) <= Command(1);
 	        Command(1) <= Command(2);
@@ -252,7 +262,7 @@ begin
 
 	       	--Precharge Block
         	if (Prech_enable = '1') then
-	            --Precharge Bank 0
+	            --Precharge Bank 0 (either specifically this bank, or as part of prech. all banks)
 	            if ((Addr(10) = '1' or (Addr(10) = '0' and Ba = "00")) and Act_b0 = '1') then
 	                Act_b0 <= '0';
 	                Pc_b0 <= '1';
@@ -490,15 +500,32 @@ begin
 	        end if;
 
             --DQ buffer (Driver/Receiver)
+            --if(Write_enable = '1') then
 	        if (Data_in_enable = '1') then              --Writing Data to Memory
 	            if (Dqm = '0') then
 	                case (Bank) is
-	                    when "00" => Bank0 (to_integer(row_col_concat)) <= Dq;
-	                    when "01" => Bank1 (to_integer(row_col_concat)) <= Dq;
-	                    when "10" => Bank2 (to_integer(row_col_concat)) <= Dq;
-	                    when others => Bank3 (to_integer(row_col_concat)) <= Dq;
+	                    when "00" => Bank0 (to_integer(row_col_concat)) <= dq_pipe(0);
+	                    when "01" => Bank1 (to_integer(row_col_concat)) <= dq_pipe(0);
+	                    when "10" => Bank2 (to_integer(row_col_concat)) <= dq_pipe(0);
+	                    when others => Bank3 (to_integer(row_col_concat)) <= dq_pipe(0);
 	                end case;
 	            end if;
+	            --burst decode
+                --Advance Burst Counter
+            	Burst_counter <= Burst_counter + 1;
+        	 	--Col_temp <= unsigned(Col) + 1;				--sequential burst
+        	 	Col <=  std_ulogic_vector(unsigned(Col) + 1);				--sequential burst
+        	 	--Col (2 downto 0) <= std_ulogic_vector(Col_temp (2 downto 0)); 	-- burst length = 8
+
+	            --Burst Read Single Write            
+	            if (Write_burst_mode = '1') then
+	                Data_in_enable <= '0';
+	            end if;
+                if (Burst_counter >= 8) then
+                    Data_in_enable  <= '0';
+                    Data_out_enable <= '0';
+                end if;
+
             elsif (Data_out_enable = '1') then           --Reading Data from Memory
 	            if (Dqm_reg0 = '0') then
 	                case (Bank) is
@@ -510,10 +537,12 @@ begin
 	            else
 	            	Dq_reg <= (others => 'Z') after tHZ;
 	            end if;
+	            --burst decode
                 --Advance Burst Counter
             	Burst_counter <= Burst_counter + 1;
-        	 	Col_temp <= unsigned(Col) + 1;				--sequential burst
-        	 	Col (2 downto 0) <= std_ulogic_vector(Col_temp (2 downto 0)); 	-- burst length = 8
+            	Col <= std_ulogic_vector(unsigned(Col) + 1);				--sequential burst
+        	 	--Col_temp <= unsigned(Col) + 1;				--sequential burst
+        	 	--Col (2 downto 0) <= std_ulogic_vector(Col_temp (2 downto 0)); 	-- burst length = 8
 
 	            --Burst Read Single Write            
 	            if (Write_burst_mode = '1') then

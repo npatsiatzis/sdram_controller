@@ -11,13 +11,17 @@ entity sdram_top is
  		i_W_n : in std_ulogic;
  		i_ads_n : in std_ulogic;
  		i_addr : in std_ulogic_vector(SYS_ADDR_WIDTH -1 downto 0);
-  		io_data : inout std_ulogic_vector(SYS_DATA_WIDTH -1 downto 0);
+  		--io_data : inout std_ulogic_vector(SYS_DATA_WIDTH -1 downto 0);
+  		i_data : in std_ulogic_vector(SYS_DATA_WIDTH -1 downto 0);
+  		o_data : out std_ulogic_vector(SYS_DATA_WIDTH -1 downto 0);
   		o_init_done : out std_ulogic;
   		o_tip : out std_ulogic;				--transaction in progress
   		o_data_valid : out std_ulogic;
 
  		--interface between controller and sdram
- 		io_DQ : inout std_ulogic_vector(SDRAM_DATA_WIDTH -1 downto 0);
+ 		i_DQ : in std_logic_vector(SDRAM_DATA_WIDTH -1 downto 0);
+ 		o_DQ : out std_logic_vector(SDRAM_DATA_WIDTH -1 downto 0);
+ 		--io_DQ : inout std_ulogic_vector(SDRAM_DATA_WIDTH -1 downto 0);
  		o_DQM : out std_ulogic;
  		o_CSn : out std_ulogic;
  		o_RASn : out std_ulogic;
@@ -86,7 +90,9 @@ sdram_data_bus : entity work.sdram_data_bus(rtl)
 		--system interface to controller
  		i_clk =>i_clk,
  		i_arst =>i_arst,
- 		io_data =>io_data,
+ 		--io_data =>io_data,
+ 		i_data =>i_data,
+ 		o_data =>o_data,
  		o_data_valid =>o_data_valid,
 
  		--internal (hierarchy) controller signals
@@ -94,7 +100,9 @@ sdram_data_bus : entity work.sdram_data_bus(rtl)
  		i_cnt =>w_cnt,
 
  		--interface between controller and sdram
- 		io_DQ =>io_DQ);
+ 		i_DQ => i_DQ,
+ 		o_DQ => o_DQ);
+ 		--io_DQ =>io_DQ);
 
 sdram_FSM : entity work.sdram_FSM(rtl)
 	port map(

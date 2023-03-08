@@ -44,7 +44,7 @@ async def test(dut):
 
 	dut.i_ads_n.value = 0
 	dut.i_W_n.value = 0
-	dut.io_data.value = 100
+	dut.i_data.value = 100
 	dut.i_addr.value = 0
 
 	await FallingEdge(dut.o_tip)
@@ -57,7 +57,7 @@ async def test(dut):
 
 	dut.i_ads_n.value = 0
 	dut.i_W_n.value = 1
-	# dut.io_data.value = 100
+	# dut.i_data.value = 100
 	dut.i_addr.value = 0
 
 	await FallingEdge(dut.o_tip)
