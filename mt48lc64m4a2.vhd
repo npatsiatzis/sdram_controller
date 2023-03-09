@@ -19,8 +19,8 @@ entity mt48lc64m4a2 is
 end mt48lc64m4a2;
 
 architecture rtl of mt48lc64m4a2 is
-	constant memsizes : natural :=65536;
-	--constant memsizes : natural := 16777215;
+	constant memsizes : natural :=65536;		--e.g 2**16 (9 bit for row, 7 for col)
+	--constant memsizes : natural := 16777215;  --2**24 (13 bit for row, 11 for col)
 	type t_bank is array (0 to memsizes) of std_ulogic_vector(3 downto 0);
 	signal Bank0, Bank1, Bank2, Bank3 : t_bank;
 
