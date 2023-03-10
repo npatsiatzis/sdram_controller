@@ -22,6 +22,11 @@ VHDL_SOURCES += $(PWD)/top.vhd
 test:
 		rm -rf sim_build
 		$(MAKE) sim MODULE=testbench TOPLEVEL=top
-		
+
+formal_control_bus :
+		sby --yosys "yosys -m ghdl" -f sdram_control_bus.sby
+
+formal_fsm :
+		sby --yosys "yosys -m ghdl" -f sdram_FSM.sby
 # include cocotb's make rules to take care of the simulator setup
 include $(shell cocotb-config --makefiles)/Makefile.sim

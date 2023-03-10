@@ -37,27 +37,6 @@ begin
 	o_delay_cycles <= w_init_delay_cycles when (o_init_state /= i_READY) else w_command_delay_cycles;
 	o_refresh_rst_cnt <= '1' when (o_init_state /= i_READY) else '0';
 
-	--calc_delay_cycles : process(i_clk,i_arst) is
-	--begin
-	--	if(i_arst = '1') then
-	--		o_delay_cycles <= w_init_delay_cycles;
-	--		o_rst_cnt <= w_init_rst_cnt;
-	--		o_refresh_rst_cnt <= '1';
-	--	elsif (rising_edge(i_clk)) then
-	--		if(o_init_state /= i_READY) then
-	--			o_delay_cycles <= w_init_delay_cycles;
-	--			o_rst_cnt <= w_init_rst_cnt;
-	--			o_refresh_rst_cnt <= '1';
-	--		else
-	--			o_delay_cycles <= w_command_delay_cycles;
-	--			o_rst_cnt <= w_command_rst_cnt;
-	--			o_refresh_rst_cnt <= '0';
-	--		end if;
-	--	end if;
-	--end process; -- calc_delay_cycles
-
-	--w_init_rst_cnt <= '1' when (o_init_state = i_PRE or ) else '0';
-
 	with o_init_state select 
 	w_init_rst_cnt <= '1' when i_PRE | i_AR_1 | i_AR_2 | i_LMR,
 					  '0' when others;

@@ -1,0 +1,38 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+use work.sdram_controller_pkg.all;
+
+vunit formal_test(sdram_FSM(rtl)) {
+
+
+
+	default clock is rising_edge(i_clk);
+
+
+	--#####################################################
+
+	-------------------
+	--ASSERT PROPERTIES
+	-------------------
+
+	check_action_after_100us : assert always (({i_delay_100us_done = '1' and o_init_state = i_NOP} |=> {o_init_state = i_PRE})abort (i_arst = '1'));
+	check_c_state_when_not_rdy : assert always {o_init_state /= i_READY} |-> {o_command_state = c_IDLE};
+	assert always (({fell(o_tip)} |-> {prev(o_command_state) = c_WAIT_RD_END_BURST or prev(o_command_state) = c_DAL}) abort (i_arst = '1'));
+	--#####################################################
+
+	-------------------
+	--ASSUME PROPERTIES
+	-------------------
+
+	assume {i_arst = '1'};
+	
+
+	--#####################################################
+
+	-------------------
+	--COVER PROPERTIES
+	-------------------
+
+
+}
