@@ -15,10 +15,21 @@ vunit formal_test(sdram_FSM(rtl)) {
 	-------------------
 	--ASSERT PROPERTIES
 	-------------------
-
+	--check the behavior of the init fsm when 100 us have elaspsed and we are in NOP state
 	check_action_after_100us : assert always (({i_delay_100us_done = '1' and o_init_state = i_NOP} |=> {o_init_state = i_PRE})abort (i_arst = '1'));
+	
+	--check the behavior of command FSM while init FSM has not yet reached the ready state
 	check_c_state_when_not_rdy : assert always {o_init_state /= i_READY} |-> {o_command_state = c_IDLE};
-	assert always (({fell(o_tip)} |-> {prev(o_command_state) = c_WAIT_RD_END_BURST or prev(o_command_state) = c_DAL}) abort (i_arst = '1'));
+	
+	--check the behavior of signal o_tip
+	check_tip_rose : assert always (({rose(o_tip)}|-> {o_command_state = c_ACTIVE}) abort(i_arst = '1'));
+	check_tip_fell : assert always (({fell(o_tip)} |-> {prev(o_command_state) = c_WAIT_RD_END_BURST or prev(o_command_state) = c_DAL}) abort (i_arst = '1'));
+	check_tip_stable : assert always (({o_command_state /= c_ACTIVE and o_command_state /= c_IDLE} |-> {stable(o_tip)}) abort (i_arst = '1'));
+	
+	--check the behavior of o_init_done signal
+	check_init_done : assert always (({o_command_state /= c_IDLE} |-> {o_init_done = '1'}) abort (i_arst = '1'));
+	
+	check_rst_cnt_init : assert always (({o_init_state = i_PRE or o_init_state = i_AR_1 or o_init_state = i_AR_2 or o_init_state = i_LMR} |-> {not stable(o_rst_cnt)}) abort (i_arst = '1' or (o_init_state = i_READY)));
 	--#####################################################
 
 	-------------------
@@ -33,6 +44,13 @@ vunit formal_test(sdram_FSM(rtl)) {
 	-------------------
 	--COVER PROPERTIES
 	-------------------
+	--witness covers to make sure we dont succumb to vacuous sucess of our functional assertions
 
 
+	--no need to cover init FSM directly, we can achieve this indirectly by covering command FSM
+	cover_tip_0_1_0_via_write : cover {o_tip = '0'; true[+]; rose(o_tip); true[+]; o_command_state = c_DAL; fell(o_tip)};
+	cover_tip_0_1_0_via_read : cover {o_tip = '0'; true[+]; rose(o_tip); true[+]; o_command_state = c_WAIT_RD_END_BURST; fell(o_tip)};
+	cover_rst_cnt : cover {o_rst_cnt = '0'; true[+]; rose(o_rst_cnt); true [+]; fell(o_rst_cnt)};
+	cover_init_done : cover {o_init_done = '0'; true[+]; rose(o_init_done); stable(o_init_done) [+]};
+	cover_refresh_rst_cnt : cover {o_refresh_rst_cnt = '1'; true[+]; (o_init_state = i_MRD and (i_cnt = tMRD -1)); fell(o_refresh_rst_cnt)};
 }

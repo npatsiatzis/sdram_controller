@@ -47,50 +47,39 @@ begin
 			o_init_state <= i_NOP;
 			o_init_done <= '0';
 			w_init_delay_cycles <= INITIALIZATION_DELAY_CYCLES;
-			--w_init_rst_cnt <= '1';
 		elsif (rising_edge(i_clk)) then
 			case o_init_state is 
 				when i_NOP =>
-					--w_init_rst_cnt <= '0';
 					if(i_delay_100us_done = '1') then
 						o_init_state <= i_PRE;
 					end if;
 				when i_PRE =>
 					o_init_state <= i_RP;
 					w_init_delay_cycles <= tRP;
-					--w_init_rst_cnt <= '1';
 				when i_RP =>
-					--w_init_rst_cnt <= '0';
 					if(i_cnt = tRP-1) then
 						o_init_state <= i_AR_1;
 					end if;
 				when i_AR_1 =>
 					o_init_state <= i_RFC_1;
 					w_init_delay_cycles <= tRFC;
-					--w_init_rst_cnt <= '1';
 				when i_RFC_1 =>
-					--w_init_rst_cnt <= '0';
 					if(i_cnt = tRFC-1) then
 						o_init_state <= i_AR_2;
 					end if;
 				when i_AR_2 =>
 					o_init_state <= i_RFC_2;
 					w_init_delay_cycles <= tRFC;
-					--w_init_rst_cnt <= '1';
 				when i_RFC_2 =>
-					--w_init_rst_cnt <= '0';
 					if(i_cnt = tRFC-1) then
 						o_init_state <= i_LMR;
 					end if;
 				when i_LMR =>
 					o_init_state <= i_MRD;
 					w_init_delay_cycles <= tMRD;
-					--w_init_rst_cnt <= '1';
 				when i_MRD =>
-					--w_init_rst_cnt <= '0';
 					if(i_cnt = tMRD-1) then
 						o_init_state <= i_READY;
-						--w_init_rst_cnt <= '1';
 					end if;
 				when i_READY =>
 					o_init_state <= i_READY;
@@ -109,7 +98,6 @@ begin
 		if(i_arst = '1') then
 			o_command_state <= c_IDLE;
 			w_command_delay_cycles <= tRFC;
-			--w_command_rst_cnt <= '1';
 			o_tip <= '0';
 		elsif (rising_edge(i_clk)) then
 			case o_command_state is 
@@ -123,18 +111,16 @@ begin
 				when c_AR =>
 					o_command_state <= c_RFC;
 					w_command_delay_cycles <= tRFC;
-					--w_command_rst_cnt <= '1';
+	
 				when c_RFC =>
-					--w_command_rst_cnt <= '0';
 					if(i_cnt = tRFC-1) then
 						o_command_state <= c_IDLE;
 					end if;
 				when c_ACTIVE =>
 					o_command_state <= c_RCD;
 					w_command_delay_cycles <= tRCD;
-					--w_command_rst_cnt <= '1';
+	
 				when c_RCD =>
-					--w_command_rst_cnt <= '0';
 					if(i_cnt = tRCD-1) then
 						if(i_W_n = '1') then
 							o_command_state <= c_READ;
@@ -145,16 +131,14 @@ begin
 				when c_WRITE =>
 					o_command_state <= c_WAIT_WR_END_BURST;
 					w_command_delay_cycles <= WRITE_CYCLES;
-					--w_command_rst_cnt <= '1';
+	
 				when c_WAIT_WR_END_BURST =>
-					--w_command_rst_cnt <= '0';
 					if(i_cnt = WRITE_CYCLES-1) then
 						o_command_state <= c_DAL;
 						w_command_delay_cycles <= tDAL;
-						--w_command_rst_cnt <= '1';
+		
 					end if;
 				when c_DAL =>
-					--w_command_rst_cnt <= '0';
 					if(i_cnt = tDAL-1) then
 						o_command_state <= c_IDLE;
 						o_tip <= '0';
@@ -162,16 +146,14 @@ begin
 				when c_READ =>
 					o_command_state <= c_WAIT_CL;
 					w_command_delay_cycles <= CL;
-					--w_command_rst_cnt <= '1';
+	
 				when c_WAIT_CL =>
-					--w_command_rst_cnt <= '0';
 					if(i_cnt = CL-1) then
 						o_command_state <= c_WAIT_RD_END_BURST;
 						w_command_delay_cycles <= READ_CYCLES;
-						--w_command_rst_cnt <= '1';
+		
 					end if;
 				when c_WAIT_RD_END_BURST =>
-					--w_command_rst_cnt <= '0';
 					if(i_cnt = READ_CYCLES-1) then
 						o_command_state <= c_IDLE;
 						o_tip <= '0';
