@@ -38,6 +38,7 @@ class SdramBfm(metaclass=utility_classes.Singleton):
         self.dut.i_data.value = 0
         await ClockCycles(self.dut.i_clk,5)
         self.dut.i_arst.value = 0
+        await RisingEdge(self.dut.i_clk)
 
 
     async def driver_bfm(self):

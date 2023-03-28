@@ -188,7 +188,7 @@ class Coverage(uvm_subscriber):
         except UVMConfigItemNotFound:
             disable_errors = False
         if not disable_errors:
-            # if len(set(covered_values) - self.cvg) > 0:
+            # if (len(set(covered_values) - self.cvg) > 0):
             if len(self.cvg) != 2**9:
                 self.logger.error(
                     f"Functional coverage error. Missed: {set(covered_values)-self.cvg}")   
@@ -276,7 +276,7 @@ class Env_Consecutive(uvm_env):
         ConfigDB().set(None, "*", "SEQR", self.seqr)
         self.driver = Driver_Consecutive.create("driver", self)
         self.data_mon = Monitor("data_mon", self, "get_data")
-        self.coverage = Coverage("coverage", self)
+        self.coverage = Coverage("coverage_cons", self)
         self.scoreboard = Scoreboard("scoreboard", self)
 
     def connect_phase(self):
