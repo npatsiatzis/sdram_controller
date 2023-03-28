@@ -42,13 +42,9 @@ class SdramBfm(metaclass=utility_classes.Singleton):
 
 
     async def driver_bfm(self):
-        # self.dut.i_tx_en.value = 0
-        # self.dut.i_rx.value = 1
-        # self.dut.i_tx_data.value = 0
 
         while True:
             await RisingEdge(self.dut.i_clk)
-            # self.dut.i_miso.value = self.dut.o_mosi.value
             try:
                 (i_W_n,i_ads_n,i_addr,i_data) = self.driver_queue.get_nowait()
                 self.dut.i_W_n.value = i_W_n

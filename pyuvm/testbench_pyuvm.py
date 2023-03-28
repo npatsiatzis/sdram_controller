@@ -287,7 +287,8 @@ class Env_Consecutive(uvm_env):
 
 @pyuvm.test()
 class Test(uvm_test):
-    """Test UART rx-tx loopback with random values"""
+    """Check results and coverage for SDR SDRAM controller with interleaved read/write bursts
+    on the same location (bank, row, col)"""
 
     def build_phase(self):
         self.env = Env("env", self)
@@ -308,7 +309,8 @@ class Test(uvm_test):
 
 @pyuvm.test()
 class Test_Consecutive(uvm_test):
-    """Test UART rx-tx loopback with random values"""
+    """Check results and coverage for SDR SDRAM controller with a succession of write burts first
+     and then a succession of read bursts to verify the transactions"""
 
     def build_phase(self):
         self.env = Env_Consecutive("env_consecutive", self)
