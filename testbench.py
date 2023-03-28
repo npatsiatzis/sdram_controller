@@ -77,7 +77,8 @@ async def test_consecutive(dut):
 		dut.i_data.value = data
 		dut.i_addr.value = addr
 
-		await FallingEdge(dut.o_tip)
+		# await FallingEdge(dut.o_tip)
+		await RisingEdge(dut.o_wr_burst_done)
 
 	dut.i_ads_n.value = 1
 	await ClockCycles(dut.i_clk,20)
@@ -90,8 +91,11 @@ async def test_consecutive(dut):
 		dut.i_addr.value = addr
 
 
-		await FallingEdge(dut.o_tip)
-		await Timer(2,'ns')
+		# await FallingEdge(dut.o_tip)			
+		await RisingEdge(dut.o_rd_burst_done)	#functionally equivalent to the above line
+
+		# await Timer(2,'ns')
+		await RisingEdge(dut.i_clk)
 		assert not (data != int(dut.o_data.value)),"Different expected to actual read data"
 
 
@@ -122,7 +126,8 @@ async def test(dut):
 		dut.i_data.value = data
 		dut.i_addr.value = addr
 
-		await FallingEdge(dut.o_tip)
+		# await FallingEdge(dut.o_tip)
+		await RisingEdge(dut.o_wr_burst_done)
 
 
 		dut.i_ads_n.value = 1
@@ -133,14 +138,16 @@ async def test(dut):
 		dut.i_W_n.value = 1
 		dut.i_addr.value = addr
 
-		await FallingEdge(dut.o_tip)
-		await Timer(2,'ns')
-		# await RisingEdge(dut.i_clk)
+		# await FallingEdge(dut.o_tip)
+		await RisingEdge(dut.o_rd_burst_done)	#functionally equivalent to the above line
+
+		await RisingEdge(dut.i_clk)
+
 		dut.i_ads_n.value = 1
 		number_cover(dut)
 		assert not (data != int(dut.o_data.value)),"Different expected to actual read data"
 		coverage_db["top.o_data"].add_threshold_callback(notify, 100)
-		await ClockCycles(dut.i_clk,100)
+		await ClockCycles(dut.i_clk,10)
 
 	# coverage_db.report_coverage(cocotb.log.info,bins=True)
 	coverage_db.export_to_xml(filename="coverage.xml")

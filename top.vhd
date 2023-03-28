@@ -16,6 +16,8 @@ entity top is
 
 			o_init_done : out std_ulogic;
 			o_tip : out std_ulogic;
+			o_wr_burst_done : out std_ulogic;
+			o_rd_burst_done : out std_ulogic;
 			o_data_valid : out std_ulogic);
 end top;
 
@@ -45,6 +47,8 @@ begin
 		o_data => o_data,
 		o_init_done => o_init_done,
 		o_tip	=> 	o_tip,
+		o_wr_burst_done => o_wr_burst_done,
+		o_rd_burst_done => o_rd_burst_done,
 		o_data_valid => o_data_valid,
 
 		--interface between controller and sdram

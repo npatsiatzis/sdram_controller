@@ -21,7 +21,9 @@ entity sdram_FSM is
  		o_init_state : out t_init_states; 
  		o_command_state : out t_command_states;
  		o_init_done : out std_ulogic;
- 		o_tip : out std_ulogic);
+ 		o_tip : out std_ulogic;
+ 		o_wr_burst_done : out std_ulogic;
+ 		o_rd_burst_done : out std_ulogic);
 end sdram_FSM;
 
 architecture rtl of sdram_FSM is 
@@ -99,7 +101,11 @@ begin
 			o_command_state <= c_IDLE;
 			w_command_delay_cycles <= tRFC;
 			o_tip <= '0';
+			o_wr_burst_done <= '0';
+			o_rd_burst_done <= '0';
 		elsif (rising_edge(i_clk)) then
+			o_wr_burst_done <= '0';
+			o_rd_burst_done <= '0';
 			case o_command_state is 
 				when c_IDLE =>
 					if(i_ar_req ='1' and o_init_done = '1') then
@@ -142,6 +148,7 @@ begin
 					if(i_cnt = tDAL-1) then
 						o_command_state <= c_IDLE;
 						o_tip <= '0';
+						o_wr_burst_done <= '1';
 					end if;
 				when c_READ =>
 					o_command_state <= c_WAIT_CL;
@@ -157,6 +164,7 @@ begin
 					if(i_cnt = READ_CYCLES-1) then
 						o_command_state <= c_IDLE;
 						o_tip <= '0';
+						o_rd_burst_done <= '1';
 					end if;
 				when others =>
 					o_command_state <= c_IDLE;
