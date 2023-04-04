@@ -5,13 +5,13 @@ use work.sdram_controller_pkg.all;
 
 entity sdram_FSM is
 	port (
-		--system interface to controller
+		--system clock and reset
  		i_clk : in std_ulogic;
  		i_arst : in std_ulogic;
- 		i_W_n : in std_ulogic;
- 		i_ads_n : in std_ulogic;
 
  		--internal (hierarchy) controller signals
+ 		i_W_n : in std_ulogic;
+ 		i_ads_n : in std_ulogic;
  		i_ar_req : in std_ulogic;
  		i_delay_100us_done : in std_ulogic;
  		i_cnt : in unsigned(15 downto 0);
@@ -112,7 +112,6 @@ begin
 						o_command_state <= c_AR;
 					elsif (i_ads_n = '0' and o_init_done = '1') then
 						o_command_state <= c_ACTIVE;
-						o_tip <= '1';
 					end if;
 				when c_AR =>
 					o_command_state <= c_RFC;
@@ -128,6 +127,7 @@ begin
 	
 				when c_RCD =>
 					if(i_cnt = tRCD-1) then
+						o_tip <= '1';
 						if(i_W_n = '1') then
 							o_command_state <= c_READ;
 						elsif(i_W_n = '0') then

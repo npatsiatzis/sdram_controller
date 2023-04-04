@@ -5,15 +5,18 @@ use work.sdram_controller_pkg.all;
 
 entity sdram_top is
 	port (
-		--system interface to controller
- 		i_clk : in std_ulogic;
+		--system clock and reset
+		i_clk : in std_ulogic;
  		i_arst : in std_ulogic;
- 		i_W_n : in std_ulogic;
- 		i_ads_n : in std_ulogic;
- 		i_addr : in std_ulogic_vector(SYS_ADDR_WIDTH -1 downto 0);
-  		--io_data : inout std_ulogic_vector(SYS_DATA_WIDTH -1 downto 0);
+
+ 		--wb (slave) interface
+ 		i_we : in std_ulogic;
+ 		i_stb : in std_ulogic;
+ 		i_addr : in std_ulogic_vector(1 downto 0);
   		i_data : in std_ulogic_vector(SYS_DATA_WIDTH -1 downto 0);
   		o_data : out std_ulogic_vector(SYS_DATA_WIDTH -1 downto 0);
+
+  		--interrupts
   		o_init_done : out std_ulogic;
   		o_tip : out std_ulogic;				--transaction in progress
   		o_wr_burst_done : out std_ulogic;
@@ -45,7 +48,47 @@ architecture rtl of sdram_top is
 
 	signal w_delay_cycles : natural range 0 to 2**16-1;
 	signal w_rst_cnt , w_refresh_rst_cnt : std_ulogic;
+
+	signal w_tx_reg : std_ulogic_vector(SYS_DATA_WIDTH -1 downto 0);
+	signal w_addr_reg : std_ulogic_vector(SYS_DATA_WIDTH -1 downto 0);
+	signal w_rd_data : std_ulogic_vector(SYS_DATA_WIDTH -1 downto 0);
+
 begin
+
+		-- 					INTERFACE REGISTER MAP
+
+	-- 			Address 		| 		Functionality
+	--			   0 			|	(SYS_DATA_WIDTH -1 downto SYS_DATA_WIDTH-2) => i_w_n, i_ads_n, (SYS_ADDR_WIDTH -1 downto 0) => sdram_address
+	--			   1 			|	write data to tx
+	--			   2 			|	data received from sdram
+
+
+
+
+	manage_intf_regs : process(i_clk,i_arst) is
+	begin
+		if(i_arst = '1') then
+			w_tx_reg <= (others => '0');
+			w_addr_reg <= (others => '1');
+		elsif (rising_edge(i_clk)) then
+			if(i_we = '1' and i_stb = '1') then
+				case i_addr is 
+					when "00" =>
+						w_addr_reg <= i_data;
+					when "01" =>
+						w_tx_reg <= i_data;
+					when others =>	
+						null;
+				end case;
+			elsif (i_we = '0' and i_stb = '1') then
+				if(i_addr = "10") then
+					o_data <= w_rd_data;
+				end if;
+			end if;
+		end if;
+	end process; -- manage_intf_regs
+
+
 	o_DQM <= '0';
 
 init_and_other_delays : entity work.delay_counter(rtl)
@@ -72,7 +115,9 @@ sdram_control_bus  : entity work.sdram_control_bus(rtl)
 			--system interface to controller
 	 		i_clk =>i_clk,
 	 		i_arst =>i_arst,
-	 		i_addr =>i_addr,
+
+	 		i_addr =>w_addr_reg(SYS_ADDR_WIDTH -1 downto 0),
+	 		--i_addr =>i_addr,						
 
 	 		--internal (hierarchy) controller signals
 	 		i_init_state =>w_init_state, 
@@ -93,8 +138,11 @@ sdram_data_bus : entity work.sdram_data_bus(rtl)
  		i_clk =>i_clk,
  		i_arst =>i_arst,
  		--io_data =>io_data,
- 		i_data =>i_data,
- 		o_data =>o_data,
+
+ 		i_data =>w_tx_reg,						
+ 		--i_data =>i_data,
+
+ 		o_data =>w_rd_data,						
  		o_data_valid =>o_data_valid,
 
  		--internal (hierarchy) controller signals
@@ -111,8 +159,12 @@ sdram_FSM : entity work.sdram_FSM(rtl)
 		--system interface to controller
  		i_clk =>i_clk,
  		i_arst =>i_arst,
- 		i_W_n =>i_W_n,
- 		i_ads_n =>i_ads_n,
+
+
+ 		i_W_n =>w_addr_reg(SYS_DATA_WIDTH-1),			--<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+ 		i_ads_n =>w_addr_reg(SYS_DATA_WIDTH-2),			--<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+ 		--i_W_n =>w_W_n,
+ 		--i_ads_n =>w_ads_n,
 
  		--internal (hierarchy) controller signals
  		i_ar_req =>w_delay_done_refresh,
