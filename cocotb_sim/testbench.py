@@ -24,8 +24,6 @@ async def reset(dut,cycles=1):
 	dut.i_arst.value = 1
 	dut.i_we.value = 0
 	dut.i_stb.value = 0
-	# dut.i_W_n.value = 0
-	# dut.i_ads_n.value = 1
 	dut.i_addr.value = 0
 	await ClockCycles(dut.i_clk,cycles)
 	dut.i_arst.value = 0

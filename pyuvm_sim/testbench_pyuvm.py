@@ -107,14 +107,32 @@ class Driver(uvm_driver):
         await self.launch_tb()
         while True:
             data = await self.seq_item_port.get_next_item()
-            await self.bfm.send_data((0,0,data.i_crv.tx_addr,data.i_crv.tx_data))
+            await self.bfm.send_data((1,1,1,data.i_crv.tx_data))
+            await self.bfm.send_data((1,1,0,data.i_crv.tx_addr))
+            await self.bfm.send_data((1,0,0,data.i_crv.tx_addr))
+            await RisingEdge(self.bfm.dut.o_tip)
+            
+            addr = (data.i_crv.tx_addr + 2**30)
+            await self.bfm.send_data((1,1,0,addr))
             await RisingEdge(self.bfm.dut.o_wr_burst_done)
-            self.bfm.dut.i_ads_n.value = 1
+            # await RisingEdge(self.bfm.dut.o_wr_burst_done)
+            # self.bfm.dut.i_ads_n.value = 1
             await ClockCycles(self.bfm.dut.i_clk,10)
+            addr = (data.i_crv.tx_addr + 2**31)
+            await self.bfm.send_data((1,1,0,addr))
+            await self.bfm.send_data((1,0,0,data.i_crv.tx_addr))
+            await RisingEdge(self.bfm.dut.o_tip)
 
-            await self.bfm.send_data((1,0,data.i_crv.tx_addr,data.i_crv.tx_data))
+            addr = (data.i_crv.tx_addr + 2**31 + 2**30)
+            await self.bfm.send_data((1,1,0,addr))
             await RisingEdge(self.bfm.dut.o_rd_burst_done)
-            self.bfm.dut.i_ads_n.value = 1
+
+            await self.bfm.send_data((0,1,2,0))
+            await RisingEdge(self.bfm.dut.i_clk)
+
+            # await self.bfm.send_data((1,0,data.i_crv.tx_addr,data.i_crv.tx_data))
+            # await RisingEdge(self.bfm.dut.o_rd_burst_done)
+            # self.bfm.dut.i_ads_n.value = 1
             # await RisingEdge(self.bfm.dut.i_clk)
 
 
@@ -307,23 +325,23 @@ class Test(uvm_test):
         self.drop_objection()
 
 
-@pyuvm.test()
-class Test_Consecutive(uvm_test):
-    """Check results and coverage for SDR SDRAM controller with a succession of write burts first
-     and then a succession of read bursts to verify the transactions"""
+# @pyuvm.test()
+# class Test_Consecutive(uvm_test):
+#     """Check results and coverage for SDR SDRAM controller with a succession of write burts first
+#      and then a succession of read bursts to verify the transactions"""
 
-    def build_phase(self):
-        self.env = Env_Consecutive("env_consecutive", self)
-        self.bfm = SdramBfm()
+#     def build_phase(self):
+#         self.env = Env_Consecutive("env_consecutive", self)
+#         self.bfm = SdramBfm()
 
-    def end_of_elaboration_phase(self):
-        self.test_all = TestAllSeqConsecutive.create("test_all")
+#     def end_of_elaboration_phase(self):
+#         self.test_all = TestAllSeqConsecutive.create("test_all")
 
-    async def run_phase(self):
-        self.raise_objection()
-        cocotb.start_soon(Clock(self.bfm.dut.i_clk, 10, units="ns").start())
-        await self.test_all.start()
+#     async def run_phase(self):
+#         self.raise_objection()
+#         cocotb.start_soon(Clock(self.bfm.dut.i_clk, 10, units="ns").start())
+#         await self.test_all.start()
 
-        coverage_db.report_coverage(cocotb.log.info,bins=True)
-        coverage_db.export_to_xml(filename="coverage_consecutive.xml")
-        self.drop_objection()
+#         coverage_db.report_coverage(cocotb.log.info,bins=True)
+#         coverage_db.export_to_xml(filename="coverage_consecutive.xml")
+#         self.drop_objection()

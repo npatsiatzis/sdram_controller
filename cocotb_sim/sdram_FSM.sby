@@ -17,6 +17,6 @@ ghdl --std=08 sdram_controller_pkg.vhd sdram_FSM.vhd sdram_FSM.psl -e sdram_FSM
 prep -top sdram_FSM
 
 [files]
-sdram_controller_pkg.vhd
 sdram_FSM.psl
-sdram_FSM.vhd
+../rtl/sdram_controller_pkg.vhd
+../rtl/sdram_FSM.vhd

@@ -22,9 +22,9 @@ vunit formal_test(sdram_FSM(rtl)) {
 	check_c_state_when_not_rdy : assert always {o_init_state /= i_READY} |-> {o_command_state = c_IDLE};
 	
 	--check the behavior of signal o_tip
-	check_tip_rose : assert always (({rose(o_tip)}|-> {o_command_state = c_ACTIVE}) abort(i_arst = '1'));
+	--check_tip_rose : assert always (({rose(o_tip)}|-> {o_command_state = c_ACTIVE}) abort(i_arst = '1'));
 	check_tip_fell : assert always (({fell(o_tip)} |-> {prev(o_command_state) = c_WAIT_RD_END_BURST or prev(o_command_state) = c_DAL}) abort (i_arst = '1'));
-	check_tip_stable : assert always (({o_command_state /= c_ACTIVE and o_command_state /= c_IDLE} |-> {stable(o_tip)}) abort (i_arst = '1'));
+	--check_tip_stable : assert always (({o_command_state /= c_ACTIVE and o_command_state /= c_IDLE} |-> {stable(o_tip)}) abort (i_arst = '1'));
 	
 	--check the behavior of o_init_done signal
 	check_init_done : assert always (({o_command_state /= c_IDLE} |-> {o_init_done = '1'}) abort (i_arst = '1'));

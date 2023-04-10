@@ -8,16 +8,17 @@ use work.sdram_controller_pkg.all;
 
 entity sdram_data_bus is
 	port (
-		--system interface to controller
+		--system clock and reset
  		i_clk : in std_ulogic;
  		i_arst : in std_ulogic;
- 		i_data : in std_ulogic_vector(SYS_DATA_WIDTH -1 downto 0);
- 		o_data : out std_ulogic_vector(SYS_DATA_WIDTH -1 downto 0);
- 		o_data_valid : out std_ulogic;
+ 		
 
  		--internal (hierarchy) controller signals
+ 		i_data : in std_ulogic_vector(SYS_DATA_WIDTH -1 downto 0);
  		i_command_state : in t_command_states;
  		i_cnt : in unsigned(15 downto 0);
+ 		o_data : out std_ulogic_vector(SYS_DATA_WIDTH -1 downto 0);
+ 		o_data_valid : out std_ulogic;
 
  		--interface between controller and sdram
  		i_DQ : in std_logic_vector(SDRAM_DATA_WIDTH -1 downto 0);
@@ -37,8 +38,8 @@ architecture rtl of sdram_data_bus is
 	signal w_i_DQ : std_ulogic_vector(SYS_DATA_WIDTH -1 downto 0);
 begin
 
-	--io_data <= w_i_DQ when(o_data_valid = '1') else (others => 'Z');
-	o_data <= w_i_DQ when(o_data_valid = '1') else (others => 'Z');
+	--o_data <= w_i_DQ when(o_data_valid = '1') else (others => 'Z');
+	o_data <= w_i_DQ;
 	rd_data_valid_gen : process(i_clk,i_arst) is
 	begin
 		if(i_arst = '1') then

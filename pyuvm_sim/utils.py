@@ -32,10 +32,9 @@ class SdramBfm(metaclass=utility_classes.Singleton):
     async def reset(self):
         await RisingEdge(self.dut.i_clk)
         self.dut.i_arst.value = 1
-        self.dut.i_W_n.value = 0
-        self.dut.i_ads_n.value = 1
+        self.dut.i_we.value = 0
+        self.dut.i_stb.value = 0
         self.dut.i_addr.value = 0
-        self.dut.i_data.value = 0
         await ClockCycles(self.dut.i_clk,5)
         self.dut.i_arst.value = 0
         await RisingEdge(self.dut.i_clk)
@@ -46,9 +45,9 @@ class SdramBfm(metaclass=utility_classes.Singleton):
         while True:
             await RisingEdge(self.dut.i_clk)
             try:
-                (i_W_n,i_ads_n,i_addr,i_data) = self.driver_queue.get_nowait()
-                self.dut.i_W_n.value = i_W_n
-                self.dut.i_ads_n.value = i_ads_n
+                (i_we,i_stb,i_addr,i_data) = self.driver_queue.get_nowait()
+                self.dut.i_we.value = i_we
+                self.dut.i_stb.value = i_stb
                 self.dut.i_addr.value = i_addr
                 self.dut.i_data.value = i_data
 
@@ -57,14 +56,16 @@ class SdramBfm(metaclass=utility_classes.Singleton):
 
     async def data_mon_bfm(self):
         while True:
-            await RisingEdge(self.dut.o_wr_burst_done)
-            i_data = self.dut.i_data.value 
+            await RisingEdge(self.dut.sdram_top.f_is_data_to_tx)
+            i_data = self.dut.sdram_top.i_data.value 
             self.data_mon_queue.put_nowait(i_data)
 
 
     async def result_mon_bfm(self):
         while True:
             await RisingEdge(self.dut.o_rd_burst_done)
+            await RisingEdge(self.dut.i_clk)
+            await RisingEdge(self.dut.i_clk)
             await RisingEdge(self.dut.i_clk)
             self.result_mon_queue.put_nowait(self.dut.o_data.value)
 

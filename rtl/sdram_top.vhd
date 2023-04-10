@@ -53,6 +53,8 @@ architecture rtl of sdram_top is
 	signal w_addr_reg : std_ulogic_vector(SYS_DATA_WIDTH -1 downto 0);
 	signal w_rd_data : std_ulogic_vector(SYS_DATA_WIDTH -1 downto 0);
 
+	signal f_is_data_to_tx : std_ulogic;
+
 begin
 
 		-- 					INTERFACE REGISTER MAP
@@ -63,7 +65,7 @@ begin
 	--			   2 			|	data received from sdram
 
 
-
+	f_is_data_to_tx <= '1' when (i_we = '1' and i_stb = '1' and unsigned(i_addr) = 1) else '0';
 
 	manage_intf_regs : process(i_clk,i_arst) is
 	begin
@@ -137,10 +139,8 @@ sdram_data_bus : entity work.sdram_data_bus(rtl)
 		--system interface to controller
  		i_clk =>i_clk,
  		i_arst =>i_arst,
- 		--io_data =>io_data,
 
  		i_data =>w_tx_reg,						
- 		--i_data =>i_data,
 
  		o_data =>w_rd_data,						
  		o_data_valid =>o_data_valid,
@@ -152,7 +152,6 @@ sdram_data_bus : entity work.sdram_data_bus(rtl)
  		--interface between controller and sdram
  		i_DQ => i_DQ,
  		o_DQ => o_DQ);
- 		--io_DQ =>io_DQ);
 
 sdram_FSM : entity work.sdram_FSM(rtl)
 	port map(
@@ -161,10 +160,9 @@ sdram_FSM : entity work.sdram_FSM(rtl)
  		i_arst =>i_arst,
 
 
- 		i_W_n =>w_addr_reg(SYS_DATA_WIDTH-1),			--<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
- 		i_ads_n =>w_addr_reg(SYS_DATA_WIDTH-2),			--<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
- 		--i_W_n =>w_W_n,
- 		--i_ads_n =>w_ads_n,
+ 		i_W_n =>w_addr_reg(SYS_DATA_WIDTH-1),			
+ 		i_ads_n =>w_addr_reg(SYS_DATA_WIDTH-2),			
+
 
  		--internal (hierarchy) controller signals
  		i_ar_req =>w_delay_done_refresh,
