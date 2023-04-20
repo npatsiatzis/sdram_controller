@@ -9,10 +9,8 @@ entity sdram_top is
 		i_clk : in std_ulogic;
  		i_arst : in std_ulogic;
 
- 		--from wb interface
- 		i_wr : in std_ulogic;
- 		i_rd : in std_ulogic;
- 		i_addr : in std_ulogic_vector(1 downto 0);
+ 		----info from interface
+ 		i_addr : in std_ulogic_vector(SYS_DATA_WIDTH -1 downto 0);
   		i_data : in std_ulogic_vector(SYS_DATA_WIDTH -1 downto 0);
   		o_data : out std_ulogic_vector(SYS_DATA_WIDTH -1 downto 0);
 
@@ -57,40 +55,7 @@ architecture rtl of sdram_top is
 
 begin
 
-		-- 					INTERFACE REGISTER MAP
-
-	-- 			Address 		| 		Functionality
-	--			   0 			|	(SYS_DATA_WIDTH -1 downto SYS_DATA_WIDTH-2) => i_w_n, i_ads_n, (SYS_ADDR_WIDTH -1 downto 0) => sdram_address
-	--			   1 			|	write data to tx
-	--			   2 			|	data received from sdram
-
-
-	f_is_data_to_tx <= '1' when (i_wr = '1' and unsigned(i_addr) = 1) else '0';
-	--f_is_data_to_tx <= '1' when (i_we = '1' and i_stb = '1' and unsigned(i_addr) = 1) else '0';
-
-	manage_intf_regs : process(i_clk,i_arst) is
-	begin
-		if(i_arst = '1') then
-			w_tx_reg <= (others => '0');
-			w_addr_reg <= (others => '1');
-		elsif (rising_edge(i_clk)) then
-			if(i_wr = '1') then
-				case i_addr is 
-					when "00" =>
-						w_addr_reg <= i_data;
-					when "01" =>
-						w_tx_reg <= i_data;
-					when others =>	
-						null;
-				end case;
-			elsif (i_rd = '1') then
-				if(i_addr = "10") then
-					o_data <= w_rd_data;
-				end if;
-			end if;
-		end if;
-	end process; -- manage_intf_regs
-
+	o_data <= w_rd_data;
 
 	o_DQM <= '0';
 
@@ -119,7 +84,7 @@ sdram_control_bus  : entity work.sdram_control_bus(rtl)
 	 		i_clk =>i_clk,
 	 		i_arst =>i_arst,
 
-	 		i_addr =>w_addr_reg(SYS_ADDR_WIDTH -1 downto 0),
+	 		i_addr =>i_addr(SYS_ADDR_WIDTH -1 downto 0),
 	 		--i_addr =>i_addr,						
 
 	 		--internal (hierarchy) controller signals
@@ -141,7 +106,7 @@ sdram_data_bus : entity work.sdram_data_bus(rtl)
  		i_clk =>i_clk,
  		i_arst =>i_arst,
 
- 		i_data =>w_tx_reg,						
+ 		i_data =>i_data,						
 
  		o_data =>w_rd_data,						
  		o_data_valid =>o_data_valid,
@@ -161,8 +126,8 @@ sdram_FSM : entity work.sdram_FSM(rtl)
  		i_arst =>i_arst,
 
 
- 		i_W_n =>w_addr_reg(SYS_DATA_WIDTH-1),			
- 		i_ads_n =>w_addr_reg(SYS_DATA_WIDTH-2),			
+ 		i_W_n =>i_addr(SYS_DATA_WIDTH-1),			
+ 		i_ads_n =>i_addr(SYS_DATA_WIDTH-2),			
 
 
  		--internal (hierarchy) controller signals

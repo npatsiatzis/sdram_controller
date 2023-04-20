@@ -35,15 +35,14 @@ architecture rtl of top is
 	signal w_BA : std_ulogic_vector(BA_WIDTH-1 downto 0);
 	signal w_ADDR : std_ulogic_vector(SDRAM_ADDR_WIDTH-1 downto 0);
 
-	signal w_wr : std_ulogic;
-	signal w_rd : std_ulogic;
+	signal w_tx_reg : std_ulogic_vector(SYS_DATA_WIDTH -1 downto 0);
+	signal w_addr_reg : std_ulogic_vector(SYS_DATA_WIDTH -1 downto 0);
+	signal w_sdram_rd_data : std_ulogic_vector(SYS_DATA_WIDTH -1 downto 0);
 
 begin
 
 	o_stall <= o_tip;
 
-	w_wr <= '1' when (i_we = '1' and i_stb = '1') else '0';
-	w_rd <= '1' when (i_we = '0' and i_stb = '1') else '0';
 
 	manage_ack : process(i_clk,i_arst) is
 	begin
@@ -54,18 +53,32 @@ begin
 		end if;
 	end process; -- manage_ack
 
+	wb_regs : entity work.wb_regs(rtl)
+	port map(
+		i_clk => i_clk,
+		i_arst =>i_arst,
+
+		i_we => i_we,
+		i_stb => i_stb,
+		i_addr => i_addr,
+		i_data => i_data,
+		o_data => o_data,
+
+		i_sdram_rd_data => w_sdram_rd_data,
+
+		o_addr_reg =>w_addr_reg,
+		o_tx_reg => w_tx_reg
+	);
+
 	sdram_top  : entity work.sdram_top(rtl)
 	port map(
 
 		i_clk => i_clk,
 		i_arst =>i_arst,
 
-		i_wr => w_wr,
-		i_rd => w_rd,
-		--i_stb => i_stb,
-		i_addr => i_addr,
-		i_data => i_data,
-		o_data => o_data,
+		i_addr => w_addr_reg,
+		i_data => w_tx_reg,
+		o_data => w_sdram_rd_data,
 
 		o_init_done => o_init_done,
 		o_tip	=> 	o_tip,
