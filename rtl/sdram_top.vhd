@@ -9,9 +9,9 @@ entity sdram_top is
 		i_clk : in std_ulogic;
  		i_arst : in std_ulogic;
 
- 		--wb (slave) interface
- 		i_we : in std_ulogic;
- 		i_stb : in std_ulogic;
+ 		--from wb interface
+ 		i_wr : in std_ulogic;
+ 		i_rd : in std_ulogic;
  		i_addr : in std_ulogic_vector(1 downto 0);
   		i_data : in std_ulogic_vector(SYS_DATA_WIDTH -1 downto 0);
   		o_data : out std_ulogic_vector(SYS_DATA_WIDTH -1 downto 0);
@@ -65,7 +65,8 @@ begin
 	--			   2 			|	data received from sdram
 
 
-	f_is_data_to_tx <= '1' when (i_we = '1' and i_stb = '1' and unsigned(i_addr) = 1) else '0';
+	f_is_data_to_tx <= '1' when (i_wr = '1' and unsigned(i_addr) = 1) else '0';
+	--f_is_data_to_tx <= '1' when (i_we = '1' and i_stb = '1' and unsigned(i_addr) = 1) else '0';
 
 	manage_intf_regs : process(i_clk,i_arst) is
 	begin
@@ -73,7 +74,7 @@ begin
 			w_tx_reg <= (others => '0');
 			w_addr_reg <= (others => '1');
 		elsif (rising_edge(i_clk)) then
-			if(i_we = '1' and i_stb = '1') then
+			if(i_wr = '1') then
 				case i_addr is 
 					when "00" =>
 						w_addr_reg <= i_data;
@@ -82,7 +83,7 @@ begin
 					when others =>	
 						null;
 				end case;
-			elsif (i_we = '0' and i_stb = '1') then
+			elsif (i_rd = '1') then
 				if(i_addr = "10") then
 					o_data <= w_rd_data;
 				end if;

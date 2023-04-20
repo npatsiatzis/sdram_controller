@@ -35,14 +35,15 @@ architecture rtl of top is
 	signal w_BA : std_ulogic_vector(BA_WIDTH-1 downto 0);
 	signal w_ADDR : std_ulogic_vector(SDRAM_ADDR_WIDTH-1 downto 0);
 
-	signal w_W_n : std_ulogic;
-	signal w_ads_n : std_ulogic;
+	signal w_wr : std_ulogic;
+	signal w_rd : std_ulogic;
 
 begin
 
-	--w_W_n <= not(i_we);
-	--w_ads_n <= not(i_stb);
 	o_stall <= o_tip;
+
+	w_wr <= '1' when (i_we = '1' and i_stb = '1') else '0';
+	w_rd <= '1' when (i_we = '0' and i_stb = '1') else '0';
 
 	manage_ack : process(i_clk,i_arst) is
 	begin
@@ -59,8 +60,9 @@ begin
 		i_clk => i_clk,
 		i_arst =>i_arst,
 
-		i_we => i_we,
-		i_stb => i_stb,
+		i_wr => w_wr,
+		i_rd => w_rd,
+		--i_stb => i_stb,
 		i_addr => i_addr,
 		i_data => i_data,
 		o_data => o_data,
