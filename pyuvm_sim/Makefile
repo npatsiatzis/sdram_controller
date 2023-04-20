@@ -6,6 +6,7 @@ TOPLEVEL_LANG ?= vhdl
 EXTRA_ARGS += --std=08
 SIM_ARGS += --wave=wave.ghw
 
+VHDL_SOURCES += $(PWD)/../rtl/wb_regs.vhd
 VHDL_SOURCES += $(PWD)/../rtl/sdram_controller_pkg.vhd
 VHDL_SOURCES += $(PWD)/../rtl/delay_counter.vhd
 VHDL_SOURCES += $(PWD)/../rtl/sdram_control_bus.vhd
@@ -21,7 +22,7 @@ VHDL_SOURCES += $(PWD)/../rtl/top.vhd
 
 test:
 		rm -rf sim_build
-		$(MAKE) sim MODULE=testbench_pyuvm TOPLEVEL=top
+		$(MAKE) sim MODULE=tb_pyuvm TOPLEVEL=top
 		
 formal_fsm :
 		sby --yosys "yosys -m ghdl" -f sdram_FSM.sby

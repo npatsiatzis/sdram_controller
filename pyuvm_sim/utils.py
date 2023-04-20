@@ -56,8 +56,8 @@ class SdramBfm(metaclass=utility_classes.Singleton):
 
     async def data_mon_bfm(self):
         while True:
-            await RisingEdge(self.dut.sdram_top.f_is_data_to_tx)
-            i_data = self.dut.sdram_top.i_data.value 
+            await RisingEdge(self.dut.wb_regs.f_is_data_to_tx)
+            i_data = self.dut.i_data.value 
             self.data_mon_queue.put_nowait(i_data)
 
 
