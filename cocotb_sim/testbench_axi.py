@@ -114,9 +114,9 @@ async def test_consecutive(dut):
 
 		await RisingEdge(dut.S_AXI_ACLK)
 		await RisingEdge(dut.S_AXI_BVALID)
-
 		dut.S_AXI_AWVALID.value = 0     
 		dut.S_AXI_WVALID.value = 0      
+
 
 		await RisingEdge(dut.o_wr_burst_done)
 
@@ -148,8 +148,9 @@ async def test_consecutive(dut):
 
 		await RisingEdge(dut.S_AXI_ACLK)
 		await RisingEdge(dut.S_AXI_BVALID)
-
-
+		dut.S_AXI_AWVALID.value = 0
+		dut.S_AXI_WVALID.value = 0
+		
 		await RisingEdge(dut.o_rd_burst_done)
 
 		dut.S_AXI_ARVALID.value = 1
@@ -218,11 +219,11 @@ async def test(dut):
 
 		await RisingEdge(dut.S_AXI_ACLK)
 		await RisingEdge(dut.S_AXI_BVALID)
+		dut.S_AXI_AWVALID.value = 0
+		dut.S_AXI_WVALID.value = 0
 
 		await RisingEdge(dut.o_wr_burst_done)
 
-		dut.S_AXI_AWVALID.value = 0
-		dut.S_AXI_WVALID.value = 0
 
 		await ClockCycles(dut.S_AXI_ACLK,10)
 		dut.S_AXI_AWVALID.value = 1
@@ -243,6 +244,9 @@ async def test(dut):
 		dut.S_AXI_WDATA.value = addr + 2**31 + 2**30    # W_n = 1 , ads_n = 1
 
 		await RisingEdge(dut.S_AXI_ACLK)
+		await RisingEdge(dut.S_AXI_BVALID)
+		dut.S_AXI_AWVALID.value = 0
+		dut.S_AXI_WVALID.value = 0
 		await RisingEdge(dut.o_rd_burst_done)
 
 		dut.S_AXI_ARVALID.value = 1

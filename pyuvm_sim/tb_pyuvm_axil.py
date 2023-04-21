@@ -5,7 +5,7 @@ from pyuvm import *
 import random
 import cocotb
 import pyuvm
-from utils import SdramBfm
+from utils import AxilSdramBfm
 from cocotb_coverage.coverage import CoverPoint,coverage_db
 
 # g_sys_clk = int(cocotb.top.g_sys_clk)
@@ -76,7 +76,7 @@ class Driver(uvm_driver):
         self.ap = uvm_analysis_port("ap", self)
 
     def start_of_simulation_phase(self):
-        self.bfm = SdramBfm()
+        self.bfm = AxilSdramBfm()
 
     async def launch_tb(self):
         await self.bfm.reset()
@@ -86,27 +86,53 @@ class Driver(uvm_driver):
         await self.launch_tb()
         while True:
             data = await self.seq_item_port.get_next_item()
-            await self.bfm.send_data((1,1,1,data.i_crv.tx_data))
-            await self.bfm.send_data((1,1,0,data.i_crv.tx_addr))
-            await self.bfm.send_data((1,0,0,data.i_crv.tx_addr))
+            await self.bfm.send_data((1,1,1,data.i_crv.tx_data,1,0,0,0))
+            await RisingEdge(self.bfm.dut.S_AXI_BVALID)
+            await self.bfm.send_data((1,0,1,data.i_crv.tx_addr,1,0,0,0))
+            await RisingEdge(self.bfm.dut.S_AXI_BVALID)
+            await self.bfm.send_data((0,0,0,data.i_crv.tx_addr,1,0,0,0))
+
+
+            # await self.bfm.send_data((1,0,0,data.i_crv.tx_addr))
             await RisingEdge(self.bfm.dut.o_tip)
             
             addr = (data.i_crv.tx_addr + 2**30)
-            await self.bfm.send_data((1,1,0,addr))
+            await self.bfm.send_data((1,0,1,addr,1,0,0,0))
+            await RisingEdge(self.bfm.dut.S_AXI_BVALID)
+            await self.bfm.send_data((0,0,0,addr,1,0,0,0))
             await RisingEdge(self.bfm.dut.o_wr_burst_done)
+            # await RisingEdge(self.bfm.dut.o_wr_burst_done)
+            # self.bfm.dut.i_ads_n.value = 1
 
-            await ClockCycles(self.bfm.dut.i_clk,10)
+            await ClockCycles(self.bfm.dut.S_AXI_ACLK,10)
             addr = (data.i_crv.tx_addr + 2**31)
-            await self.bfm.send_data((1,1,0,addr))
-            await self.bfm.send_data((1,0,0,data.i_crv.tx_addr))
+            await self.bfm.send_data((1,0,1,addr,1,0,0,0))
+            await RisingEdge(self.bfm.dut.S_AXI_BVALID)
+
+            await self.bfm.send_data((0,0,0,addr,1,0,0,0))
+            # await self.bfm.send_data((1,0,0,data.i_crv.tx_addr))
             await RisingEdge(self.bfm.dut.o_tip)
 
             addr = (data.i_crv.tx_addr + 2**31 + 2**30)
-            await self.bfm.send_data((1,1,0,addr))
+            await self.bfm.send_data((1,0,1,addr,1,0,0,0))
+            await RisingEdge(self.bfm.dut.S_AXI_BVALID)
+            await self.bfm.send_data((0,0,0,addr,1,0,0,0))
+            # await RisingEdge(self.bfm.dut.S_AXI_BVALID)
             await RisingEdge(self.bfm.dut.o_rd_burst_done)
 
-            await self.bfm.send_data((0,1,2,0))
-            await RisingEdge(self.bfm.dut.i_clk)
+            await self.bfm.send_data((0,0,0,addr,1,1,2,1))
+            await FallingEdge(self.bfm.dut.S_AXI_RVALID)
+            await self.bfm.send_data((0,0,0,0,1,0,2,1))
+            # await RisingEdge(self.bfm.dut.S_AXI_ACLK)
+
+            # await self.bfm.send_data((1,0,data.i_crv.tx_addr,data.i_crv.tx_data))
+            # await RisingEdge(self.bfm.dut.o_rd_burst_done)
+            # self.bfm.dut.i_ads_n.value = 1
+            # await RisingEdge(self.bfm.dut.S_AXI_ACLK)
+
+
+            # await RisingEdge(self.bfm.dut.o_tx_ready)
+            # await self.bfm.send_data((0,0))
             result = await self.bfm.get_result()
             self.ap.write(result)
             data.result = result
@@ -184,7 +210,7 @@ class Monitor(uvm_component):
 
     def build_phase(self):
         self.ap = uvm_analysis_port("ap", self)
-        self.bfm = SdramBfm()
+        self.bfm = AxilSdramBfm()
         self.get_method = getattr(self.bfm, self.method_name)
 
     async def run_phase(self):
@@ -210,7 +236,6 @@ class Env(uvm_env):
         self.data_mon.ap.connect(self.coverage.analysis_export)
         self.driver.ap.connect(self.scoreboard.result_export)
 
-
 @pyuvm.test()
 class Test(uvm_test):
     """Check results and coverage for SDR SDRAM controller with interleaved read/write bursts
@@ -218,14 +243,14 @@ class Test(uvm_test):
 
     def build_phase(self):
         self.env = Env("env", self)
-        self.bfm = SdramBfm()
+        self.bfm = AxilSdramBfm()
 
     def end_of_elaboration_phase(self):
         self.test_all = TestAllSeq.create("test_all")
 
     async def run_phase(self):
         self.raise_objection()
-        cocotb.start_soon(Clock(self.bfm.dut.i_clk, 10, units="ns").start())
+        cocotb.start_soon(Clock(self.bfm.dut.S_AXI_ACLK, 10, units="ns").start())
         await self.test_all.start()
 
         coverage_db.report_coverage(cocotb.log.info,bins=True)
