@@ -68,7 +68,7 @@ begin
 		if(i_arst = '1') then
 			axil_awready <= '0';
 		elsif (rising_edge(i_clk)) then
-			if(axil_awready = '0' and S_AXI_AWVALID = '1' and S_AXI_WVALID = '1' and S_AXI_BVALID = '0' and S_AXI_BREADY = '1') then
+			if(axil_awready = '0' and S_AXI_AWVALID = '1' and S_AXI_WVALID = '1' and (S_AXI_BVALID = '0' or S_AXI_BREADY = '1')) then
 				axil_awready <= '1';
 			else
 				axil_awready <= '0';
